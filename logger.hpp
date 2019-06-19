@@ -3,25 +3,19 @@
 
 #include <string>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <mutex>
 
-using namespace std;
-
 class Logger {
 private:
-  mutex mtx;
-  ofstream f;
+  std::mutex mtx;
+  std::ofstream f;
+
   Logger() = default;
-  Logger(const Logger&)
-    = delete;
-  Logger& operator=(const Logger&)
-    = delete;
-  ~Logger() {
-    f.close();
-  }
+  ~Logger() = default;
+  Logger(const Logger&) = delete;
+  Logger& operator=(const Logger&) = delete;
 
 public:
   static Logger &instance() {
@@ -29,25 +23,28 @@ public:
     return logger;
   }
 
-  static void init(const string &filename) {
+  static void init(const std::string &filename) {
+    std::lock_guard<std::mutex> lock(instance().mtx);
     if (instance().f.is_open()) {
-      throw runtime_error{ "Logger already initialized" };
+      throw std::runtime_error{ "Logger already initialized" };
     }
     instance().f.open(filename,
-      ios::binary | ios::app);
+      std::ios::binary | std::ios::app);
   }
 
-  void out(const string &msg) {
-    unique_lock<mutex> lock(mtx);
+  void out(const std::string &msg) {
+    std::lock_guard<std::mutex> lock(mtx);
     time_t t = time(nullptr);
-    stringstream ss;
-    ss << put_time(localtime(&t),
+    std::stringstream ss;
+    ss << std::put_time(localtime(&t),
             "%Y-%m-%dT%H:%M:%S ")
-      << msg << endl;
+      << msg << std::endl;
     f << ss.str();
+    f.flush();
   }
 
   void flush() {
+    std::lock_guard<std::mutex> lock(mtx);
     f.flush();
   }
 };
