@@ -10,6 +10,7 @@
 class Logger {
 private:
   std::mutex mtx;
+  static std::mutex initMtx;
   std::ofstream f;
   static Logger *logger;
 
@@ -19,6 +20,7 @@ private:
 public:
   static Logger *instance() {
     static Cleaner cleaner;
+    std::lock_guard<std::mutex> lock(Logger::initMtx);
     if (logger == nullptr) {
       logger = new Logger;
     }
@@ -30,8 +32,7 @@ public:
     if (instance()->f.is_open()) {
       throw std::runtime_error{ "Logger already initialized" };
     }
-    instance()->f.open(filename,
-      std::ios::binary | std::ios::app);
+    instance()->f.open(filename, std::ios::binary | std::ios::app);
   }
 
   Logger(const Logger &) = delete;
@@ -44,8 +45,7 @@ public:
     }
     time_t t = time(nullptr);
     std::stringstream ss;
-    ss << std::put_time(localtime(&t),
-            "%Y-%m-%dT%H:%M:%S ")
+    ss << std::put_time(localtime(&t), "%Y-%m-%dT%H:%M:%S ")
       << msg << std::endl;
     f << ss.str();
     f.flush();

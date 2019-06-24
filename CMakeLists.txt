@@ -3,7 +3,8 @@ project(loggerdemo)
 set(CMAKE_CXX_FLAGS
   "-O2 -std=c++11")
 set(HEADER_FILES
-  logger.hpp)
+  lazylogger.hpp)
 add_executable(loggerdemo
+	lazylogger.cpp
 	main.cpp
 )
